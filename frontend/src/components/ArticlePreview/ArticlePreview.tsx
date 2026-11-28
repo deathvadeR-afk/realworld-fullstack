@@ -1,9 +1,11 @@
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
 import { Article } from '../../types/article';
+import { readingTimeMinutes } from './readingTime';
 
 export function ArticlePreview({
   article: {
+    body,
     createdAt,
     favorited,
     favoritesCount,
@@ -31,6 +33,7 @@ export function ArticlePreview({
             {username}
           </Link>
           <span className='date'>{format(createdAt, 'PP')}</span>
+          <span className='reading-time'>{`${readingTimeMinutes(body)} min read`}</span>
         </div>
         <button
           className={`btn btn-sm pull-xs-right ${favorited ? 'btn-primary' : 'btn-outline-primary'}`}

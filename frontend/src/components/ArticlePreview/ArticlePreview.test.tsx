@@ -50,3 +50,24 @@ it('Should display tags', () => {
   expect(screen.getByText('tag1')).toBeInTheDocument();
   expect(screen.getByText('tag2')).toBeInTheDocument();
 });
+
+it("[QP-QTRW-7-7] An article preview shows the minutes as 'N min read'", () => {
+  const body = Array.from({ length: 450 }, () => 'word').join(' ');
+  render(
+    <MemoryRouter>
+      <ArticlePreview article={{ ...defaultArticle, body }} isSubmitting={false} />
+    </MemoryRouter>
+  );
+
+  expect(screen.getByText('3 min read')).toBeInTheDocument();
+});
+
+it("[QP-QTRW-7-8] An empty-body article preview shows '0 min read'", () => {
+  render(
+    <MemoryRouter>
+      <ArticlePreview article={{ ...defaultArticle, body: '' }} isSubmitting={false} />
+    </MemoryRouter>
+  );
+
+  expect(screen.getByText('0 min read')).toBeInTheDocument();
+});
