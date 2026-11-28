@@ -141,7 +141,7 @@ it('Should redirect to login on favorite if the user is not logged in', async ()
   });
 
   await act(async () => {
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Favorite' }));
     expect(store.getState().articleViewer.articles.unwrap()[0].isSubmitting).toBe(false);
   });
 
@@ -176,7 +176,7 @@ it('Should favorite article', async () => {
   });
 
   await act(async () => {
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Favorite' }));
     expect(store.getState().articleViewer.articles.unwrap()[0].isSubmitting).toBe(true);
   });
 
@@ -210,7 +210,7 @@ it('Should unfavorite article', async () => {
   });
 
   await act(async () => {
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Favorite' }));
     expect(store.getState().articleViewer.articles.unwrap()[0].isSubmitting).toBe(true);
   });
 
@@ -306,4 +306,112 @@ it('Should change tabs', async () => {
   expect(screen.getByText('# the real tag')).toHaveClass('active');
   expect(mockedGetArticles.mock.calls).toHaveLength(2);
   expect(mockedGetArticles.mock.calls[1][0]).toHaveProperty('tag', 'the real tag');
+});
+
+it('[QP-QTRW-17-1] Shows a Refresh button beside the article feed tabs on the home page', async () => {
+  mockedGetArticles.mockResolvedValueOnce({
+    articles: [defaultArticle],
+    articlesCount: 0,
+  });
+  mockedGetTags.mockResolvedValueOnce({ tags: [] });
+
+  await act(async () => {
+    await render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+  });
+
+  const refreshButton = screen.getByRole('button', { name: 'Refresh' });
+  expect(screen.getByText('Global Feed').closest('.feed-toggle')).toContainElement(refreshButton);
+});
+
+it('[QP-QTRW-17-2] Reloads the article list in place when Refresh is clicked', async () => {
+  mockedGetArticles.mockResolvedValueOnce({
+    articles: [defaultArticle],
+    articlesCount: 0,
+  });
+  mockedGetTags.mockResolvedValueOnce({ tags: [] });
+
+  await act(async () => {
+    await render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+  });
+
+  const urlBefore = window.location.href;
+  mockedGetArticles.mockResolvedValueOnce({
+    articles: [defaultArticle],
+    articlesCount: 0,
+  });
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  });
+
+  expect(mockedGetArticles.mock.calls).toHaveLength(2);
+  expect(window.location.href).toBe(urlBefore);
+});
+
+it('[QP-QTRW-17-3] Disables Refresh and shows \'Refreshing...\' while the reload is in progress', async () => {
+  mockedGetArticles.mockResolvedValueOnce({
+    articles: [defaultArticle],
+    articlesCount: 0,
+  });
+  mockedGetTags.mockResolvedValueOnce({ tags: [] });
+
+  await act(async () => {
+    await render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+  });
+
+  mockedGetArticles.mockReturnValueOnce(new Promise<never>(() => {}));
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  });
+
+  expect(screen.getByRole('button', { name: 'Refreshing...' })).toBeDisabled();
+});
+
+it('[QP-QTRW-17-4] Re-enables Refresh with the \'Refresh\' label when the reload finishes', async () => {
+  mockedGetArticles.mockResolvedValueOnce({
+    articles: [defaultArticle],
+    articlesCount: 0,
+  });
+  mockedGetTags.mockResolvedValueOnce({ tags: [] });
+
+  await act(async () => {
+    await render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+  });
+
+  let finishReload: () => void = () => {};
+  mockedGetArticles.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finishReload = () => resolve({ articles: [defaultArticle], articlesCount: 0 });
+      })
+  );
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  });
+
+  expect(screen.getByRole('button', { name: 'Refreshing...' })).toBeDisabled();
+
+  await act(async () => {
+    finishReload();
+  });
+
+  expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled();
 });
