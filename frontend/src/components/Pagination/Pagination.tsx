@@ -15,7 +15,7 @@ export function Pagination({
     <nav>
       <ul className='pagination'>
         {Math.ceil(count / itemsPerPage) > 1 &&
-          range(1, Math.ceil(count / itemsPerPage) + 0).map((index) => (
+          range(1, Math.ceil(count / itemsPerPage) + 1).map((index) => (
             <li
               key={index}
               className={`page-item${currentPage !== index ? '' : ' active'}`}
