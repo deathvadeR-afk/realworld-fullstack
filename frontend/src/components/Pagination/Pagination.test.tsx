@@ -49,3 +49,29 @@ it('Should render active page as active and the rest as non active', () => {
   expect(mockOnPageChange.mock.calls[0][0]).toBe(10);
   expect(mockOnPageChange.mock.calls[1][0]).toBe(23);
 });
+
+it('[QP-QTRW-6-1] Shows three page buttons for 25 articles at 10 per page', () => {
+  render(<Pagination currentPage={1} count={25} itemsPerPage={10} />);
+  expectPageButtonCount(3);
+
+  const buttons = screen.queryAllByLabelText(/Go to page number \d/);
+  expect(buttons.map((button) => button.textContent)).toEqual(['1', '2', '3']);
+});
+
+it('[QP-QTRW-6-2] Shows seven page buttons for 100 articles at 15 per page', () => {
+  render(<Pagination currentPage={1} count={100} itemsPerPage={15} />);
+  expectPageButtonCount(7);
+
+  const buttons = screen.queryAllByLabelText(/Go to page number \d/);
+  expect(buttons.map((button) => button.textContent)).toEqual(['1', '2', '3', '4', '5', '6', '7']);
+});
+
+it('[QP-QTRW-6-3] Shows no extra button when the count divides exactly by the page size', () => {
+  render(<Pagination currentPage={1} count={500} itemsPerPage={10} />);
+  expectPageButtonCount(50);
+});
+
+it('[QP-QTRW-6-4] Shows no page buttons when the articles fit on one page', () => {
+  render(<Pagination currentPage={1} count={7} itemsPerPage={10} />);
+  expectPageButtonCount(0);
+});
