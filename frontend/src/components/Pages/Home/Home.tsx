@@ -1,4 +1,5 @@
 import { Option } from '@hqoss/monads';
+import { useState } from 'react';
 import { getArticles, getFeed, getTags } from '../../../services/conduit';
 import { store } from '../../../state/store';
 import { useStoreWithInitializer } from '../../../state/storeHooks';
@@ -10,6 +11,13 @@ import { changeTab, loadTags, startLoadingTags } from './Home.slice';
 
 export function Home() {
   const { tags, selectedTab } = useStoreWithInitializer(({ home }) => home, load);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function onRefresh() {
+    setRefreshing(true);
+    await reloadArticles();
+    setRefreshing(false);
+  }
 
   return (
     <div className='home-page'>
@@ -22,6 +30,8 @@ export function Home() {
             tabs={buildTabsNames(selectedTab)}
             onPageChange={onPageChange}
             onTabChange={onTabChange}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
           />
         </div>
 
@@ -69,6 +79,13 @@ async function onPageChange(index: number) {
   store.dispatch(changePage(index));
 
   const multipleArticles = await getFeedOrGlobalArticles({ offset: (index - 1) * 10 });
+  store.dispatch(loadArticles(multipleArticles));
+}
+
+async function reloadArticles() {
+  store.dispatch(startLoadingArticles());
+
+  const multipleArticles = await getFeedOrGlobalArticles();
   store.dispatch(loadArticles(multipleArticles));
 }
 

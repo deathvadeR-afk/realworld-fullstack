@@ -14,18 +14,22 @@ export function ArticlesViewer({
   selectedTab,
   onPageChange,
   onTabChange,
+  onRefresh,
+  refreshing,
 }: {
   toggleClassName: string;
   tabs: string[];
   selectedTab: string;
   onPageChange?: (index: number) => void;
   onTabChange?: (tab: string) => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }) {
   const { articles, articlesCount, currentPage } = useStore(({ articleViewer }) => articleViewer);
 
   return (
     <Fragment>
-      <ArticlesTabSet {...{ tabs, selectedTab, toggleClassName, onTabChange }} />
+      <ArticlesTabSet {...{ tabs, selectedTab, toggleClassName, onTabChange, onRefresh, refreshing }} />
       <ArticleList articles={articles} />
       <Pagination currentPage={currentPage} count={articlesCount} itemsPerPage={10} onPageChange={onPageChange} />
     </Fragment>
@@ -37,11 +41,15 @@ function ArticlesTabSet({
   toggleClassName,
   selectedTab,
   onTabChange,
+  onRefresh,
+  refreshing,
 }: {
   tabs: string[];
   toggleClassName: string;
   selectedTab: string;
   onTabChange?: (tab: string) => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }) {
   return (
     <div className={toggleClassName}>
@@ -50,6 +58,11 @@ function ArticlesTabSet({
           <Tab key={tab} tab={tab} active={tab === selectedTab} onClick={() => onTabChange && onTabChange(tab)} />
         ))}
       </ul>
+      {onRefresh && (
+        <button className='btn btn-sm btn-outline-secondary' disabled={refreshing} onClick={() => onRefresh()}>
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
+      )}
     </div>
   );
 }

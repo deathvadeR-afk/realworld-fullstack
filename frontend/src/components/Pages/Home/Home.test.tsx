@@ -5,6 +5,7 @@ import { store } from '../../../state/store';
 import { initializeApp, loadUser } from '../../App/App.slice';
 import { Home } from './Home';
 import { changeTab } from './Home.slice';
+import { MultipleArticles } from '../../../types/article';
 
 jest.mock('../../../services/conduit');
 
@@ -141,7 +142,7 @@ it('Should redirect to login on favorite if the user is not logged in', async ()
   });
 
   await act(async () => {
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Favorite' }));
     expect(store.getState().articleViewer.articles.unwrap()[0].isSubmitting).toBe(false);
   });
 
@@ -176,7 +177,7 @@ it('Should favorite article', async () => {
   });
 
   await act(async () => {
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Favorite' }));
     expect(store.getState().articleViewer.articles.unwrap()[0].isSubmitting).toBe(true);
   });
 
@@ -210,7 +211,7 @@ it('Should unfavorite article', async () => {
   });
 
   await act(async () => {
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Favorite' }));
     expect(store.getState().articleViewer.articles.unwrap()[0].isSubmitting).toBe(true);
   });
 
@@ -306,4 +307,110 @@ it('Should change tabs', async () => {
   expect(screen.getByText('# the real tag')).toHaveClass('active');
   expect(mockedGetArticles.mock.calls).toHaveLength(2);
   expect(mockedGetArticles.mock.calls[1][0]).toHaveProperty('tag', 'the real tag');
+});
+
+it('[QP-QTRW-16-1] Should show a Refresh button beside the feed tabs on the home page', async () => {
+  mockedGetArticles.mockResolvedValueOnce({
+    articles: [defaultArticle],
+    articlesCount: 0,
+  });
+  mockedGetTags.mockResolvedValueOnce({ tags: [] });
+
+  await act(async () => {
+    await render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+  });
+
+  const tabRow = screen.getByText('Global Feed').closest('.feed-toggle');
+  expect(tabRow).toContainElement(screen.getByRole('button', { name: 'Refresh' }));
+});
+
+it('[QP-QTRW-16-2] Should reload the article list in place without a full page reload', async () => {
+  mockedGetArticles.mockResolvedValueOnce({
+    articles: [defaultArticle],
+    articlesCount: 0,
+  });
+  mockedGetTags.mockResolvedValueOnce({ tags: [] });
+
+  await act(async () => {
+    await render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+  });
+
+  const globalFeedTab = screen.getByText('Global Feed');
+  mockedGetArticles.mockResolvedValueOnce({
+    articles: [{ ...defaultArticle, title: 'Refreshed article' }],
+    articlesCount: 0,
+  });
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  });
+
+  expect(mockedGetArticles.mock.calls).toHaveLength(2);
+  expect(screen.getByText('Refreshed article')).toBeInTheDocument();
+  expect(screen.getByText('Global Feed')).toBe(globalFeedTab);
+});
+
+it('[QP-QTRW-16-3] Should disable the button and read Refreshing... while the reload is pending', async () => {
+  mockedGetArticles.mockResolvedValueOnce({
+    articles: [defaultArticle],
+    articlesCount: 0,
+  });
+  mockedGetTags.mockResolvedValueOnce({ tags: [] });
+
+  await act(async () => {
+    await render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+  });
+
+  mockedGetArticles.mockReturnValueOnce(new Promise<MultipleArticles>(() => {}));
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  });
+
+  expect(screen.getByRole('button', { name: 'Refreshing...' })).toBeDisabled();
+});
+
+it('[QP-QTRW-16-4] Should re-enable the button and read Refresh once the reload finishes', async () => {
+  mockedGetArticles.mockResolvedValueOnce({
+    articles: [defaultArticle],
+    articlesCount: 0,
+  });
+  mockedGetTags.mockResolvedValueOnce({ tags: [] });
+
+  await act(async () => {
+    await render(
+      <MemoryRouter>
+        <Home />
+      </MemoryRouter>
+    );
+  });
+
+  let resolveReload: (articles: MultipleArticles) => void = () => {};
+  mockedGetArticles.mockReturnValueOnce(
+    new Promise<MultipleArticles>((resolve) => {
+      resolveReload = resolve;
+    })
+  );
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+  });
+
+  await act(async () => {
+    resolveReload({ articles: [defaultArticle], articlesCount: 0 });
+  });
+
+  expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled();
 });
