@@ -50,3 +50,34 @@ it('Should display tags', () => {
   expect(screen.getByText('tag1')).toBeInTheDocument();
   expect(screen.getByText('tag2')).toBeInTheDocument();
 });
+
+it('[QP-QTRW-8-8] Shows the estimate on an article preview', () => {
+  const body = Array.from({ length: 450 }, () => 'word').join(' ');
+
+  render(
+    <MemoryRouter>
+      <ArticlePreview article={{ ...defaultArticle, body }} isSubmitting={false} />
+    </MemoryRouter>
+  );
+
+  expect(screen.getByText('3 min read')).toBeInTheDocument();
+});
+
+it("[QP-QTRW-8-9] Shows each article's own estimate across a list of previews", () => {
+  const longBody = Array.from({ length: 450 }, () => 'word').join(' ');
+  const shortBody = Array.from({ length: 200 }, () => 'word').join(' ');
+
+  const { container } = render(
+    <MemoryRouter>
+      <div>
+        <ArticlePreview article={{ ...defaultArticle, body: longBody }} isSubmitting={false} />
+        <ArticlePreview article={{ ...defaultArticle, body: shortBody, slug: 'test-short' }} isSubmitting={false} />
+      </div>
+    </MemoryRouter>
+  );
+
+  const previews = container.querySelectorAll('.article-preview');
+  expect(previews).toHaveLength(2);
+  expect(previews[0].textContent).toContain('3 min read');
+  expect(previews[1].textContent).toContain('1 min read');
+});
