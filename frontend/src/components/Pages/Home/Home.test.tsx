@@ -141,7 +141,7 @@ it('Should redirect to login on favorite if the user is not logged in', async ()
   });
 
   await act(async () => {
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Favorite' }));
     expect(store.getState().articleViewer.articles.unwrap()[0].isSubmitting).toBe(false);
   });
 
@@ -176,7 +176,7 @@ it('Should favorite article', async () => {
   });
 
   await act(async () => {
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Favorite' }));
     expect(store.getState().articleViewer.articles.unwrap()[0].isSubmitting).toBe(true);
   });
 
@@ -210,7 +210,7 @@ it('Should unfavorite article', async () => {
   });
 
   await act(async () => {
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Favorite' }));
     expect(store.getState().articleViewer.articles.unwrap()[0].isSubmitting).toBe(true);
   });
 
